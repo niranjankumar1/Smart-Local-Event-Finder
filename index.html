@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Local Event Finder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    canvas {
+      border: 4px dashed #6366f1;
+      border-radius: 1rem;
+      background: #f1f5f9;
+    }
+    .event-card {
+      opacity: 0;
+      transform: translateY(20px);
+      background: white;
+      padding: 1.25rem;
+      margin: 0.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      border-left: 6px solid #6366f1;
+      transition: opacity 0.6s ease, transform 0.4s ease;
+    }
+    .event-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .event-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+    #event-list {
+      min-height: 400px;
+      padding: 1rem;
+    }
+    body {
+      min-height: 200vh;
+      background: linear-gradient(to bottom right, #e0f2fe, #f0fdf4);
+    }
+  </style>
+</head>
+<body>
+  <div class="max-w-5xl mx-auto p-6 mt-8 bg-white rounded-3xl shadow-xl">
+    <h1 class="text-4xl font-extrabold text-center text-indigo-700 mb-4 tracking-tight">🎯 Smart Local Event Finder</h1>
+    <div id="location-status" class="text-center text-gray-700 text-lg mb-6 font-medium"></div>
+    <canvas id="event-map" width="600" height="400" class="block mx-auto mb-8"></canvas>
+    <div id="event-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </div>
+
+  <!-- Your Original Script (No changes) -->
+  <script>
+    const locationStatus = document.getElementById('location-status');
+    let userCoords = { latitude: 0, longitude: 0 };
+
+    function getUserLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            userCoords.latitude = position.coords.latitude;
+            userCoords.longitude = position.coords.longitude;
+            locationStatus.textContent = `📍 Location: (${userCoords.latitude.toFixed(2)}, ${userCoords.longitude.toFixed(2)})`;
+            initMap();
+            loadEvents();
+          },
+          (error) => {
+            locationStatus.textContent = '❌ Error getting location: ' + error.message;
+          }
+        );
+      } else {
+        locationStatus.textContent = '⚠️ Geolocation not supported.';
+      }
+    }
+
+    const canvas = document.getElementById('event-map');
+    const ctx = canvas.getContext('2d');
+    const events = [
+      { id: 1, name: '🎶 Music Festival', lat: 0.1, lon: 0.1, description: 'Live music event with local bands.' },
+      { id: 2, name: '🎨 Art Exhibition', lat: -0.05, lon: 0.15, description: 'Contemporary art showcase.' },
+      { id: 3, name: '🍽️ Food Fair', lat: 0.05, lon: -0.05, description: 'Taste cuisines from around the world.' },
+    ];
+
+    function initMap() {
+      ctx.fillStyle = '#e5e7eb';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'blue';
+      ctx.beginPath();
+      ctx.arc(300, 200, 10, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillStyle = 'black';
+      ctx.font = '16px Arial';
+      ctx.fillText('You are here', 310, 200);
+
+      events.forEach(event => {
+        const x = 300 + (event.lon * 1000);
+        const y = 200 - (event.lat * 1000);
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.fillText(event.name, x + 10, y);
+      });
+
+      animateMap();
+    }
+
+    function animateMap() {
+      ctx.fillStyle = '#e5e7eb';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'blue';
+      ctx.beginPath();
+      ctx.arc(300, 200, 10, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillStyle = 'black';
+      ctx.font = '16px Arial';
+      ctx.fillText('You are here', 310, 200);
+
+      events.forEach(event => {
+        const x = 300 + (event.lon * 1000);
+        const y = 200 - (event.lat * 1000);
+        ctx.fillStyle = `rgba(255, 0, 0, ${0.5 + 0.5 * Math.sin(Date.now() / 500)})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.fillText(event.name, x + 10, y);
+      });
+      requestAnimationFrame(animateMap);
+    }
+
+    const eventList = document.getElementById('event-list');
+
+    function loadEvents() {
+      console.log('Trying to load events...');
+      if (!eventList) {
+        console.error('Event list not found!');
+        locationStatus.textContent += ' | Error: No event list';
+        return;
+      }
+      eventList.innerHTML = '';
+      events.forEach(event => {
+        console.log('Adding card: ' + event.name);
+        const eventCard = document.createElement('div');
+        eventCard.className = 'event-card';
+        eventCard.innerHTML = `
+          <h2 class="text-xl font-semibold mb-2 text-indigo-800">${event.name}</h2>
+          <p class="text-gray-600">Loading details...</p>
+        `;
+        eventList.appendChild(eventCard);
+      });
+
+      console.log('Setting up observer...');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            console.log('Visible: ' + entry.target.querySelector('h2').textContent);
+            const card = entry.target;
+            card.classList.add('visible');
+            const index = Array.from(eventList.children).indexOf(card);
+            if (events[index]) {
+              card.querySelector('p').textContent = events[index].description;
+            }
+            observer.unobserve(card);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.event-card').forEach(card => {
+        console.log('Observing: ' + card.querySelector('h2').textContent);
+        observer.observe(card);
+      });
+    }
+
+    let lastReorderTime = 0;
+    function updateRecommendations(deadline) {
+      const now = Date.now();
+      if (deadline.timeRemaining() > 0 && events.length && (now - lastReorderTime > 10000)) {
+        console.log('Reordering events...');
+        lastReorderTime = now;
+        events.forEach(event => {
+          event.relevance = Math.random();
+        });
+        events.sort((a, b) => b.relevance - a.relevance);
+        requestAnimationFrame(loadEvents);
+      }
+      if (events.length) {
+        requestIdleCallback(updateRecommendations, { timeout: 10000 });
+      }
+    }
+
+    console.log('Starting app...');
+    getUserLocation();
+    requestIdleCallback(updateRecommendations, { timeout: 10000 });
+  </script>
+</body>
+</html>
