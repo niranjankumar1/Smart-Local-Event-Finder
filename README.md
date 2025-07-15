@@ -21,4 +21,5 @@ Web APIs (Geolocation, Canvas, Intersection Observer, Background Tasks)
 
 💻 How to Run Locally
 npm install -g http-server
+
 http-server -p 8000
